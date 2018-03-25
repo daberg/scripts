@@ -65,6 +65,11 @@ if [[ -z "$bupath" ]]; then
 fi
 
 bupath=${bupath/backup-path=/}
+# Remove trailing slashes
+# Ripped from https://unix.stackexchange.com/questions/198045/how-to-strip-the-last-slash-of-the-directory-path
+case $bupath in
+  *[!/]*/) bupath=${bupath%"${bupath##*[!/]}"};;
+esac
 debug "Parsed backup path: $bupath"
 
 if [ ! -d $bupath ]; then
@@ -82,6 +87,9 @@ do
         echo
 
     elif [ -f $input ]; then
+
+        # TODO: check if file is a link! In that case do nothing
+
         debug "File detected"
         filepath=`readlink -f $input`
         destpath="$bupath$filepath"
