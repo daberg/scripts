@@ -169,8 +169,7 @@ do
         fi
 
     else
-        debug "$input should not exist yet"
+        debug "$input should not exist"
         echo "$input not found. Skipping"
     fi
 done
-

@@ -15,49 +15,46 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Shell script to easily convert .flac files to .mp3 format at the specified
-# path.
-# .flac files are searched for recursively, and the output files are placed
-# in a new folder tree that mantains the original folder tree structure.
+# Bash script to easily convert .flac files to .mp3 format at the specified
+# path
+# 
+# Takes the path to the folder to be searched as input
+# 
+# .flac files are recursively searched for, and the output files are placed
+# in a new folder tree that mantains the original folder tree structure
 
-# Checking whether ffmpeg is installed. If not, exit.
+# Check command line arguments
+if [ -z "$1" ] || [ ! -z "$2" ]; then
+    echo "Wrong number of arguments"
+    echo "Usage: flactomp3 FILE"
+    exit 1
+fi
+
+# Check whether ffmpeg is installed. If not, exit.
 command -v ffmpeg >/dev/null 2>&1 || { echo "ffmpeg was not found. Aborting." >&2; exit 1; }
 
-# Get path from user input
-echo "Insert path:"
-read input_path
+# Sanitize input
+path="${1/%\/}"
 
-# Uncomment this line to "hardcode" the path into the script
-#input_path="/replace/with/desired/path"
-
-# Perform some input sanitizing
-path="${input_path/%\/}"
-
-echo "Starting."
 echo "Target path: $path"
 
+# TODO: change condition and handle empty directory case
 if cd "$path"; then
 
-	# Obtain output folder name from specified starting folder
-	out_folder_name="OUT_${PWD##*/}"
-	
+	out_folder_name="${PWD##*/}_flac"
 	output_path="${path}/${out_folder_name}"
 	
 	echo "Output path: $output_path"
 	printf "\n\n"
 
 	i=0
-	
 	while IFS= read -r -d $'\0' line; do
-		
 		lines[$i]=$line
 		i=$[i+1]
-			
 	done < <(find . -type d -print0)
-	
 	count=$i
+
 	i=0
-	
 	while [ $i -lt $count ]; do
 
 		line=${lines[$i]}
@@ -68,7 +65,7 @@ if cd "$path"; then
 			
 			flac_count=`find . -maxdepth 1 -type f -name "*.flac" 2>/dev/null | wc -l`
 		
-			# If letter count is different than zero, then there are .flac files
+			# If there are .flac files
 			if [ $flac_count != 0 ]; then		
 			
 				# Obtain output folder partial path (empty if initial folder)
@@ -95,24 +92,18 @@ if cd "$path"; then
 				done;
 		
 			else
-		
 				echo "No .flac files were found."
-
 			fi
-		
 		fi
 		
 		printf "\n\n"
 	
 		cd "$path"
-		
 		i=$[i+1]
 	
 	done;
 
 # If path was invalid, quit
 else
-
 	exit 1
-
 fi
