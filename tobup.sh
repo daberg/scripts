@@ -15,66 +15,79 @@
 #
 # To activate debugging output export the variable tobupdebug
 
-configfile="${HOME}/.config/tobupconfig"
+# Prints a debugging statement
+function debug {
+    if [ ! -z "$tobupdebug" ]; then echo "[Debug] $1"; fi
+}
 
+# Prints a fatal error statement and exits
 function fail {
     echo "[Error] $1"
     echo "Aborting..."
     exit 1
 }
 
-function debug {
-    if [ ! -z "$tobupdebug" ]; then echo "[Debug] $1"; fi
+# Parses configuration file looking for a valid backup path
+function parseconfig {
+
+    debug "Parsing configuration parameters from $configfile"
+    count=0
+    while read -r line
+    do
+        count=$(( count + 1 ))
+    
+        # Line is a comment
+        if [[ "$line" =~ ^#.* ]]; then
+            debug "Line $count is a comment"
+    
+        # Line has a backup path definition
+        elif [[ "$line" =~ ^backup-path=[^=[:space:]]*$ ]]; then
+            if [[ -z "$bupath" ]]; then
+                debug "Found backup path definition at line $count"
+                bupath=$line
+            else
+                fail "Line ${count} at ${configfile}: only one backup path can be specified"
+            fi
+    
+        # Line is not empty
+        elif [[ ! -z "$line" ]]; then
+            fail "Line ${count} at ${configfile}: invalid syntax"
+    
+        # Line is empty
+        else
+            debug "Line $count empty"
+        fi
+    done < "$configfile"
+    
+    if [[ -z "$bupath" ]]; then
+        fail "No backup path specified at ${configfile}"
+    fi
+    
+    bupath=${bupath/backup-path=/}
+    
+    # Remove possible trailing slash
+    if [[ "$bupath" = *[!/]*/ ]]; then
+      debug "$bupath is not root folder and has a trailing slash"
+      parsedpath=${bupath%/}
+
+      # If there is still a trailing slash, fail
+      if [[ "$parsedpath" = */ ]]; then
+          fail "Invalid syntax for backup path"
+      fi
+
+      bupath=$parsedpath
+    fi
+    
+    debug "Parsed backup path: $bupath"
+
+    if [ ! -d "$bupath" ]; then
+        fail "$bupath is not a valid directory. Aborting."
+    fi
 }
 
-if [ -z "$1" ]
-then
-    echo "Missing arguments"
-    echo "Usage: tobup FILE..."
-    exit 1
-fi
+configfile="${HOME}/.config/tobupconfig"
 
-if [ ! -f $configfile ]; then
-    fail "No configuration file found at: $configfile"
-fi
-
-debug "Parsing configuration parameters from $configfile"
-count=0
-while read -r line
-do
-    count=$(( count + 1 ))
-
-    if [[ "$line" =~ ^backup-path=[^=]* ]]; then
-        if [[ -z "$bupath" ]]; then
-            debug "Found backup path definition at line $count"
-            bupath=$line
-        else
-            fail "Line ${count} at ${configfile}: only one backup path can be specified"
-        fi
-
-    elif [[ ! -z "$line" ]]; then
-        fail "Line ${count} at ${configfile}: invalid syntax"
-
-    else
-        debug "Line $count empty"
-    fi
-done < "$configfile"
-
-if [[ -z "$bupath" ]]; then
-    fail "No backup path specified at ${configfile}"
-fi
-
-bupath=${bupath/backup-path=/}
-# Remove trailing slashes
-# Ripped from https://unix.stackexchange.com/questions/198045/how-to-strip-the-last-slash-of-the-directory-path
-case $bupath in
-  *[!/]*/) bupath=${bupath%"${bupath##*[!/]}"};;
-esac
-debug "Parsed backup path: $bupath"
-
-if [ ! -d $bupath ]; then
-    fail "$bupath is not a valid directory. Aborting."
-fi
+parseconfig
 
 debug "Processing command line arguments"
 for input in "$@"
@@ -84,11 +97,12 @@ do
     if [ -d $input ]; then
         debug "Directory detected"
         echo "$input is a directory. Skipping"
-        echo
+
+    elif [ -L $input ]; then
+        debug "Symbolic link detected"
+        echo "$input is a symbolic link. Skipping"
 
     elif [ -f $input ]; then
-
-        # TODO: check if file is a link! In that case do nothing
 
         debug "File detected"
         filepath=`readlink -f $input`
@@ -107,7 +121,7 @@ do
         destfolder=`dirname $destpath`
         mkdir -p $destfolder || fail "Could not create path $destfolder"
 
-        # TODO: here we could check folder and file permissions, instead
+        # TODO: here we should check folder and file permissions, instead
         if [[ "$filepath" = "$HOME"* ]]; then
             debug "File in home path: root permissions not needed"
             sudoprefix=""
@@ -128,40 +142,9 @@ do
             fail "Could not link $input, moving it back"
         fi
 
-        echo
-
     else
         debug "$input should not exist yet"
-
-        if [[ "$input" = *"/"* ]]; then
-            echo "$input is not a valid file name. Skipping"
-            echo
-            continue
-        fi
-
-        filepath="${PWD}/${input}"
-        destpath="$bupath$filepath"
-
-        # TODO: implement this branch
-
-        echo "Creating $input at $destpath"
-        #touch $input
-        #install -D $filepath $destpath
-        #rm $filepath
-
-        echo "Linking as $filepath"
-        #ln -s $destpath $filepath
-
-        echo
-
-        if [[ "$filepath" = "$HOME"* ]]; then
-            debug "File in home path"
-        else
-            debug "File not in home path"
-        fi
-
+        echo "$input not found. Skipping"
     fi
 done
-
-echo "Done"
 
