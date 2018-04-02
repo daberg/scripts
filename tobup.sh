@@ -102,6 +102,17 @@ function parseconfig {
 
 configfile="${HOME}/.config/tobupconfig"
 
+if [ -z "$1" ]
+then
+    echo "Missing arguments"
+    echo "Usage: tobup FILE..."
+    exit 1
+fi
+
+if [ ! -f $configfile ]; then
+    fail "No configuration file found at: $configfile"
+fi
+
 parseconfig
 
 debug "Processing command line arguments"
