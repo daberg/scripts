@@ -22,6 +22,7 @@ emonth = int(sys.argv[2])
 eyear = int(sys.argv[3])
 
 rem_d = (datetime.date(eyear, emonth, eday) - datetime.datetime.now().date()).days
+rem_d = rem_d if rem_d > 0 else 0
 rem_w = round(rem_d / 7, 1)
 rem_y = round(rem_d / 365, 1)
 
@@ -41,5 +42,5 @@ else:
     perc_rem_d = round(rem_d / tot_d * 100, 1)
     perc_ela_d = round(ela_d / tot_d * 100, 1)
 
-    print("Remaining\t{}D\t{}W\t{}Y\t{}%".format(rem_d, rem_w, rem_y, rem_d))
-    print("Elapsed  \t{}D\t{}W\t{}Y\t{}%".format(ela_d, ela_w, ela_y, ela_d))
+    print("Remaining\t{}D\t{}W\t{}Y\t{}%".format(rem_d, rem_w, rem_y, perc_rem_d))
+    print("Elapsed  \t{}D\t{}W\t{}Y\t{}%".format(ela_d, ela_w, ela_y, perc_ela_d))
