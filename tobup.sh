@@ -28,7 +28,7 @@
 #
 #     backup-path=/path/to/the/backup/folder
 #
-# To activate debugging output export the variable tobupdebug
+# To activate debugging output export the variable $tobupdebug
 
 # Prints a debugging statement
 function debug {
@@ -42,7 +42,8 @@ function fail {
     exit 1
 }
 
-# Parses configuration file looking for a valid backup path
+# Parses configuration file
+# If a single valid backup path is found, it is stored in the $bupath variable
 function parseconfig {
 
     debug "Parsing configuration parameters from $configfile"
