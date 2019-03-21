@@ -39,8 +39,8 @@ else:
     ela_y = round(ela_d / 365, 1)
 
     tot_d = rem_d + ela_d
-    perc_rem_d = round(rem_d / tot_d * 100, 1)
-    perc_ela_d = round(ela_d / tot_d * 100, 1)
+    perc_rem_d = tot_d if tot_d <= 0 else round(rem_d / tot_d * 100, 1)
+    perc_ela_d = 100 if tot_d <= 0 else round(ela_d / tot_d * 100, 1)
 
     print("Remaining\t{}D\t{}W\t{}Y\t{}%".format(rem_d, rem_w, rem_y, perc_rem_d))
     print("Elapsed  \t{}D\t{}W\t{}Y\t{}%".format(ela_d, ela_w, ela_y, perc_ela_d))
