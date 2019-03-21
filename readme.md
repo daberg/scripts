@@ -1,3 +1,3 @@
-### Scripts
+# Linux scripts
 
-Shell scripts for ordinary Linux system administration
+Shell scripts for the everyday administration of a Linux system
