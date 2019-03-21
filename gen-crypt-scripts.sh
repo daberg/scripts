@@ -20,8 +20,10 @@ echo "Type secret again"
 read -s passcheck
 
 if [ "$password" != "$passcheck" ]; then
-    echo "Secrets do not match"
+    echo "Error: secrets do not match. Aborting..."
     exit 1
+else
+    echo "Encrypted message:"
 fi
 
 echo "$password" | openssl aes-256-cbc -a -salt -k' >> out.enc.sh
